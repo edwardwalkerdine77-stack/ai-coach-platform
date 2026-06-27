@@ -1,145 +1,91 @@
 import streamlit as st
 import pandas as pd
 from video_analyser import VideoAnalyzer
+from supabase_client import supabase, get_user, create_user
 
 # ---------------- PAGE SETUP ----------------
 st.set_page_config(page_title="FIFA AI Analytics", layout="wide")
 
-# ---------------- 🎨 PREMIUM UI ----------------
-st.markdown("""
-<style>
+# ---------------- SESSION STATE ----------------
+if "user" not in st.session_state:
+    st.session_state.user = None
 
-/* BACKGROUND */
-.main {
-    background: radial-gradient(circle at top, #121826, #0f1117);
-}
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-/* TEXT */
-h1, h2, h3 {
-    color: white;
-    font-weight: 700;
-}
+# ---------------- LOGIN / SIGNUP UI ----------------
+if not st.session_state.logged_in:
 
-/* METRIC CARDS */
-div[data-testid="metric-container"] {
-    background: rgba(28, 31, 42, 0.75);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 18px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    backdrop-filter: blur(10px);
-    transition: 0.2s ease;
-}
+    st.title("⚽ FIFA AI Coach Login")
 
-div[data-testid="metric-container"]:hover {
-    transform: translateY(-3px);
-    border: 1px solid #2d6cff;
-}
+    tab1, tab2 = st.tabs(["Login", "Sign Up"])
 
-/* SIDEBAR */
-section[data-testid="stSidebar"] {
-    background: #0b0d12;
-}
+    # ---------------- LOGIN ----------------
+    with tab1:
+        username = st.text_input("Username", key="login_user")
+        password = st.text_input("Password", type="password", key="login_pass")
 
-/* BUTTONS */
-.stButton > button {
-    background: linear-gradient(90deg, #2d6cff, #6c5ce7);
-    color: white;
-    border-radius: 10px;
-    border: none;
-    padding: 8px 14px;
-    font-weight: 600;
-}
+        if st.button("Login"):
 
-.stButton > button:hover {
-    transform: scale(1.03);
-}
+            user = get_user(username)
 
-/* UPLOAD */
-.css-1cpxqw2 {
-    border: 1px dashed rgba(255,255,255,0.25);
-    border-radius: 12px;
-    padding: 20px;
-}
+            if user and user["password"] == password:
+                st.session_state.logged_in = True
+                st.session_state.user = user
+                st.success("Login successful!")
+                st.rerun()
+            else:
+                st.error("Invalid username or password")
 
-</style>
-""", unsafe_allow_html=True)
+    # ---------------- SIGNUP ----------------
+    with tab2:
+        new_user = st.text_input("Create Username")
+        new_pass = st.text_input("Create Password", type="password")
 
-# ---------------- HEADER ----------------
-st.markdown("""
-<div style="
-    padding: 30px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #1c1f2a, #0f1117);
-    border: 1px solid rgba(45,108,255,0.3);
-    margin-bottom: 20px;
-">
-<h1>⚽ FIFA AI Intelligence Platform</h1>
-<p style="color:#b0b0b0;">
-EA FC-style tactical analysis • scouting reports • AI performance insights
-</p>
-</div>
-""", unsafe_allow_html=True)
+        if st.button("Create Account"):
 
-# ---------------- HERO ----------------
-st.markdown("""
-<div style="
-    padding: 20px;
-    border-radius: 12px;
-    background-color: #1c1f2a;
-    margin-bottom: 20px;
-    border-left: 4px solid #2d6cff;
-">
-<h2>🎮 AI COACH SYSTEM</h2>
-<p style="color:#b0b0b0;">
-Upload your match → receive pro-level tactical breakdown + FIFA-style scouting report.
-</p>
-</div>
-""", unsafe_allow_html=True)
+            existing = get_user(new_user)
 
-# ---------------- HOW IT WORKS ----------------
-st.markdown("## 🧠 How it works")
+            if existing:
+                st.error("User already exists")
+            else:
+                create_user(new_user, new_pass)
+                st.success("Account created! Go to login.")
 
-c1, c2, c3 = st.columns(3)
+    st.stop()
 
-with c1:
-    st.info("1️⃣ Upload match footage")
+# ---------------- LOGOUT ----------------
+user = st.session_state.user
 
-with c2:
-    st.info("2️⃣ AI analyses movement & pressure")
+st.sidebar.title(f"👤 {user['username']}")
 
-with c3:
-    st.info("3️⃣ Get coaching insights")
+if st.sidebar.button("Logout"):
+    st.session_state.logged_in = False
+    st.session_state.user = None
+    st.rerun()
 
-st.markdown("## 💎 Features")
+# ---------------- TITLE ----------------
+st.title("⚽ FIFA AI Intelligence Platform")
+st.markdown(f"Welcome **{user['username']}** 👋")
 
-st.markdown("""
-- ⚽ Tactical breakdown  
-- 🧠 AI scouting report  
-- 📊 Pressure + chaos metrics  
-- 📈 Momentum analysis  
-- 🎮 FIFA-style player ratings  
-""")
+# ---------------- PLAN SYSTEM ----------------
+plan = user.get("plan", "bronze")
 
-# ---------------- SAAS SYSTEM ----------------
-if "plan" not in st.session_state:
-    st.session_state.plan = "bronze"
-
-st.sidebar.title("⚽ AI Coach System")
-
-st.sidebar.write(f"Plan: **{st.session_state.plan.upper()}**")
 st.sidebar.markdown("---")
+st.sidebar.write(f"Plan: **{plan.upper()}**")
 
 if st.sidebar.button("🥈 Upgrade to Silver"):
-    st.session_state.plan = "silver"
+    supabase.table("users").update({"plan": "silver"}).eq("username", user["username"]).execute()
+    user["plan"] = "silver"
+    st.success("Upgraded to Silver!")
+    st.rerun()
 
 if st.sidebar.button("🥇 Upgrade to Gold"):
-    st.session_state.plan = "gold"
+    supabase.table("users").update({"plan": "gold"}).eq("username", user["username"]).execute()
+    user["plan"] = "gold"
+    st.success("Upgraded to Gold!")
+    st.rerun()
 
-st.sidebar.markdown("---")
-st.sidebar.info("Unlock scouting + full AI analysis + premium insights")
-
-# ---------------- FEATURES ----------------
 FEATURES = {
     "bronze": {"scouting": False},
     "silver": {"scouting": False},
@@ -162,9 +108,7 @@ if file:
 
     st.success("Analysis Complete")
 
-    # ---------------- MATCH RESULT ----------------
-    st.markdown("## ⚽ Match Performance Report")
-
+    # ---------------- MATCH REPORT ----------------
     score = result["tactical_score"]
 
     if score >= 8:
@@ -179,11 +123,9 @@ if file:
     st.divider()
 
     # ---------------- METRICS ----------------
-    st.markdown("## 📊 Performance Dashboard")
-
     c1, c2, c3, c4 = st.columns(4)
 
-    c1.metric("⚽ Tactical Score", f"{result['tactical_score']}/10")
+    c1.metric("⚽ Tactical Score", f"{score}/10")
     c2.metric("🔥 Pressure", result["pressure_index"])
     c3.metric("💥 Chaos", result["chaos_index"])
     c4.metric("📍 Events", len(result["events"]))
@@ -196,10 +138,10 @@ if file:
 
     st.divider()
 
-    # ---------------- 🧠 FIFA PLAYER CARDS (SCOUT REPORT) ----------------
+    # ---------------- SCOUT REPORT ----------------
     st.subheader("🧠 AI SCOUT REPORT")
 
-    if not FEATURES[st.session_state.plan]["scouting"]:
+    if not FEATURES[plan]["scouting"]:
         st.warning("🔒 Upgrade to Gold to unlock Scout Report")
 
     else:
@@ -211,54 +153,35 @@ if file:
             "improvements": []
         })
 
-        # ---------------- CARD HEADER ----------------
         st.markdown(f"""
         <div style="
             padding: 25px;
             border-radius: 16px;
-            background: linear-gradient(135deg, #1c1f2a, #0f1117);
-            border: 1px solid rgba(45,108,255,0.4);
-            margin-bottom: 20px;
+            background: #1c1f2a;
+            border: 1px solid #2d6cff;
         ">
             <h2>🎴 FIFA SCOUT CARD</h2>
-            <h3 style="color:#2d6cff;">OVR Rating: {scout['rating']}</h3>
-            <p style="color:#b0b0b0;">Role: {scout['role']}</p>
+            <h3 style="color:#2d6cff;">OVR: {scout['rating']}</h3>
+            <p>Role: {scout['role']}</p>
         </div>
         """, unsafe_allow_html=True)
 
-        # ---------------- 3 COLUMNS ----------------
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.markdown("### 🟢 Strengths")
+            st.write("🟢 Strengths")
             for x in scout["strengths"]:
-                st.success(f"⚡ {x}")
+                st.success(x)
 
         with col2:
-            st.markdown("### 🔴 Weaknesses")
+            st.write("🔴 Weaknesses")
             for x in scout["weaknesses"]:
-                st.error(f"⚠️ {x}")
+                st.error(x)
 
         with col3:
-            st.markdown("### 🟡 Improvements")
+            st.write("🟡 Improvements")
             for x in scout["improvements"]:
-                st.warning(f"📈 {x}")
-
-        # ---------------- INSIGHT BOX ----------------
-        st.markdown("""
-        <div style="
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 12px;
-            background: rgba(28,31,42,0.6);
-            border-left: 4px solid #2d6cff;
-        ">
-        <h4>🧠 AI Tactical Insight</h4>
-        <p style="color:#b0b0b0;">
-        This analysis is based on motion tracking, pressure dynamics, and tactical AI modelling.
-        </p>
-        </div>
-        """, unsafe_allow_html=True)
+                st.warning(x)
 
     st.divider()
 

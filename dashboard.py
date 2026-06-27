@@ -1,10 +1,66 @@
 import streamlit as st
 import pandas as pd
+import stripe
+import webbrowser
 from video_analyser import VideoAnalyzer
 from supabase_client import supabase, get_user, create_user
 
 # ---------------- PAGE SETUP ----------------
 st.set_page_config(page_title="FIFA AI Analytics", layout="wide")
+
+# ---------------- STRIPE ----------------
+stripe.api_key = "YOUR_STRIPE_SECRET_KEY"
+
+def create_checkout(plan):
+    prices = {
+        "silver": 500,
+        "gold": 1500
+    }
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=["card"],
+        mode="payment",
+
+        # 🔥 THIS IS IMPORTANT (metadata links payment → user)
+        metadata={
+            "plan": plan
+        },
+
+        line_items=[{
+            "price_data": {
+                "currency": "gbp",
+                "product_data": {
+                    "name": f"FIFA AI {plan.upper()} Plan",
+                },
+                "unit_amount": prices[plan],
+            },
+            quantity: 1,
+        }],
+
+        success_url="https://your-app.streamlit.app",
+        cancel_url="https://your-app.streamlit.app",
+    )
+
+    return session.url
+    session = stripe.checkout.Session.create(
+        payment_method_types=["card"],
+        mode="payment",
+        line_items=[{
+            "price_data": {
+                "currency": "gbp",
+                "product_data": {
+                    "name": f"FIFA AI {plan.upper()} Plan",
+                },
+                "unit_amount": prices[plan],
+            },
+            quantity=1,
+        }],
+        success_url="https://your-app.streamlit.app",
+        cancel_url="https://your-app.streamlit.app",
+    )
+
+    return session.url
+
 
 # ---------------- SESSION STATE ----------------
 if "user" not in st.session_state:
@@ -13,48 +69,45 @@ if "user" not in st.session_state:
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ---------------- LOGIN / SIGNUP UI ----------------
+
+# ---------------- LOGIN ----------------
 if not st.session_state.logged_in:
 
     st.title("⚽ FIFA AI Coach Login")
 
     tab1, tab2 = st.tabs(["Login", "Sign Up"])
 
-    # ---------------- LOGIN ----------------
     with tab1:
         username = st.text_input("Username", key="login_user")
         password = st.text_input("Password", type="password", key="login_pass")
 
         if st.button("Login"):
-
             user = get_user(username)
 
             if user and user["password"] == password:
                 st.session_state.logged_in = True
                 st.session_state.user = user
-                st.success("Login successful!")
                 st.rerun()
             else:
                 st.error("Invalid username or password")
 
-    # ---------------- SIGNUP ----------------
     with tab2:
         new_user = st.text_input("Create Username")
         new_pass = st.text_input("Create Password", type="password")
 
         if st.button("Create Account"):
-
             existing = get_user(new_user)
 
             if existing:
                 st.error("User already exists")
             else:
                 create_user(new_user, new_pass)
-                st.success("Account created! Go to login.")
+                st.success("Account created!")
 
     st.stop()
 
-# ---------------- LOGOUT ----------------
+
+# ---------------- USER ----------------
 user = st.session_state.user
 
 st.sidebar.title(f"👤 {user['username']}")
@@ -64,33 +117,34 @@ if st.sidebar.button("Logout"):
     st.session_state.user = None
     st.rerun()
 
-# ---------------- TITLE ----------------
 st.title("⚽ FIFA AI Intelligence Platform")
 st.markdown(f"Welcome **{user['username']}** 👋")
 
-# ---------------- PLAN SYSTEM ----------------
+
+# ---------------- PLAN ----------------
 plan = user.get("plan", "bronze")
 
-st.sidebar.markdown("---")
+st.sidebar.markdown("## 💳 Plans")
 st.sidebar.write(f"Plan: **{plan.upper()}**")
 
-if st.sidebar.button("🥈 Upgrade to Silver"):
-    supabase.table("users").update({"plan": "silver"}).eq("username", user["username"]).execute()
-    user["plan"] = "silver"
-    st.success("Upgraded to Silver!")
-    st.rerun()
+# Stripe buttons
+if st.sidebar.button("💳 Buy Silver (£5)"):
+    url = create_checkout("silver")
+    webbrowser.open(url)
 
-if st.sidebar.button("🥇 Upgrade to Gold"):
-    supabase.table("users").update({"plan": "gold"}).eq("username", user["username"]).execute()
-    user["plan"] = "gold"
-    st.success("Upgraded to Gold!")
-    st.rerun()
+if st.sidebar.button("💎 Buy Gold (£15)"):
+    url = create_checkout("gold")
+    webbrowser.open(url)
+
+st.sidebar.info("Unlock scouting + AI analysis + premium insights")
+
 
 FEATURES = {
     "bronze": {"scouting": False},
     "silver": {"scouting": False},
     "gold": {"scouting": True}
 }
+
 
 # ---------------- UPLOAD ----------------
 st.markdown("## 🎬 Upload Match Video")
@@ -106,7 +160,7 @@ if file:
 
     result = VideoAnalyzer("temp.mp4").analyse(progress, status)
 
-    st.success("Analysis Complete")
+    st.success(f"Welcome {user['username']}!")
 
     # ---------------- MATCH REPORT ----------------
     score = result["tactical_score"]

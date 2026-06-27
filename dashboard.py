@@ -36,35 +36,37 @@ if file:
 
     st.divider()
 
-    # ---------------- COACH ----------------
-    st.subheader("🧠 AI Coach Report")
+    # ---------------- SCOUT REPORT ----------------
+st.subheader("🧠 AI Scout Report")
 
-    coach = result.get("coach", {
-        "summary": "No analysis available",
-        "positives": [],
-        "negatives": [],
-        "improvements": []
-    })
+scout = result.get("scout_report", {
+    "rating": 0,
+    "role": "Unknown",
+    "strengths": [],
+    "weaknesses": [],
+    "improvements": []
+})
 
-    col1, col2, col3 = st.columns(3)
+# Top summary
+st.metric("Rating", scout["rating"])
+st.write("🎯 Role:", scout["role"])
 
-    with col1:
-        st.write("🟢 Strengths")
-        for x in coach["positives"]:
-            st.success(x)
+col1, col2, col3 = st.columns(3)
 
-    with col2:
-        st.write("🔴 Weaknesses")
-        for x in coach["negatives"]:
-            st.error(x)
+with col1:
+    st.write("🟢 Strengths")
+    for x in scout["strengths"]:
+        st.success(x)
 
-    with col3:
-        st.write("🟡 Improvements")
-        for x in coach["improvements"]:
-            st.warning(x)
+with col2:
+    st.write("🔴 Weaknesses")
+    for x in scout["weaknesses"]:
+        st.error(x)
 
-    st.divider()
-
+with col3:
+    st.write("🟡 Improvements")
+    for x in scout["improvements"]:
+        st.warning(x)
     # ---------------- EVENTS ----------------
     st.subheader("⚽ Match Events")
 

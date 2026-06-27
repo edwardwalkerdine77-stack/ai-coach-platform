@@ -37,36 +37,38 @@ if file:
     st.divider()
 
     # ---------------- SCOUT REPORT ----------------
-st.subheader("🧠 AI Scout Report")
+    st.subheader("🧠 AI Scout Report")
 
-scout = result.get("scout_report", {
-    "rating": 0,
-    "role": "Unknown",
-    "strengths": [],
-    "weaknesses": [],
-    "improvements": []
-})
+    scout = result.get("scout_report", {
+        "rating": 0,
+        "role": "Unknown",
+        "strengths": [],
+        "weaknesses": [],
+        "improvements": []
+    })
 
-# Top summary
-st.metric("Rating", scout["rating"])
-st.write("🎯 Role:", scout["role"])
+    st.metric("Rating", scout["rating"])
+    st.write("🎯 Role:", scout["role"])
 
-col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
-with col1:
-    st.write("🟢 Strengths")
-    for x in scout["strengths"]:
-        st.success(x)
+    with col1:
+        st.write("🟢 Strengths")
+        for x in scout["strengths"]:
+            st.success(x)
 
-with col2:
-    st.write("🔴 Weaknesses")
-    for x in scout["weaknesses"]:
-        st.error(x)
+    with col2:
+        st.write("🔴 Weaknesses")
+        for x in scout["weaknesses"]:
+            st.error(x)
 
-with col3:
-    st.write("🟡 Improvements")
-    for x in scout["improvements"]:
-        st.warning(x)
+    with col3:
+        st.write("🟡 Improvements")
+        for x in scout["improvements"]:
+            st.warning(x)
+
+    st.divider()
+
     # ---------------- EVENTS ----------------
     st.subheader("⚽ Match Events")
 

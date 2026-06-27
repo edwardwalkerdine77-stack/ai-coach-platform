@@ -39,7 +39,12 @@ if file:
     # ---------------- COACH ----------------
     st.subheader("🧠 AI Coach Report")
 
-    coach = result["coach"]
+coach = result.get("coach", {
+    "summary": "No analysis available",
+    "positives": [],
+    "negatives": [],
+    "improvements": []
+})
 
     col1, col2, col3 = st.columns(3)
 

@@ -39,14 +39,14 @@ if file:
     # ---------------- COACH ----------------
     st.subheader("🧠 AI Coach Report")
 
-coach = result.get("coach", {
-    "summary": "No analysis available",
-    "positives": [],
-    "negatives": [],
-    "improvements": []
-})
+    coach = result.get("coach", {
+        "summary": "No analysis available",
+        "positives": [],
+        "negatives": [],
+        "improvements": []
+    })
 
- col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.write("🟢 Strengths")
@@ -71,6 +71,3 @@ coach = result.get("coach", {
     if result["events"]:
         df = pd.DataFrame(result["events"])
         st.dataframe(df, use_container_width=True)
-
-    st.subheader("🧾 Team Identity")
-    st.info(coach["identity"])

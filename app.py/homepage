@@ -1,0 +1,26 @@
+import streamlit as st
+
+st.set_page_config(page_title="AI Coaching VOD Review", layout="wide")
+
+st.title("⚽ AI Coaching VOD Review")
+
+st.markdown("""
+### Improve your gameplay using AI analysis
+Upload your match, get detailed coaching, and improve faster than ever.
+""")
+
+st.divider()
+
+st.markdown("## 🚀 Features")
+st.write("✔ Gameplay breakdown")
+st.write("✔ Strengths & weaknesses analysis")
+st.write("✔ Tactical improvement plan")
+
+st.divider()
+
+st.markdown("## 💰 Plans")
+st.write("🥉 Bronze – £10 (short clips)")
+st.write("🥈 Silver – £20 (full analysis)")
+st.write("🥇 Gold – £30 (unlimited + full scouting)")
+
+st.markdown("Go to **Upload page** to start analysis.")

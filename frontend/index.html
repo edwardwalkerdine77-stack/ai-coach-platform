@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>⚽ AI Football Coach</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            text-align: center;
+        }
+
+        .box {
+            margin: 20px auto;
+            width: 60%;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>⚽ AI Football Coach</h1>
+
+<div class="box">
+    <input type="file" id="video">
+    <button onclick="upload()">Analyse</button>
+</div>
+
+<div class="box" id="output">
+    Results will appear here
+</div>
+
+<script>
+async function upload() {
+    let file = document.getElementById("video").files[0];
+
+    let formData = new FormData();
+    formData.append("file", file);
+
+    let res = await fetch("http://127.0.0.1:8000/analyse", {
+        method: "POST",
+        body: formData
+    });
+
+    let data = await res.json();
+
+    document.getElementById("output").innerHTML = `
+        <h2>Tactical Score: ${data.tactical_score}</h2>
+        <h3>Pressure: ${data.pressure_index}</h3>
+        <h3>Chaos: ${data.chaos_index}</h3>
+        <h3>Events: ${data.events.length}</h3>
+
+        <h3>Coach</h3>
+        <p>${data.coach.summary}</p>
+    `;
+}
+</script>
+
+</body>
+</html>

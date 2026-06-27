@@ -53,7 +53,9 @@ def create_checkout(plan):
                 },
                 "unit_amount": prices[plan],
             },
-            quantity=1,
+            {
+    "quantity": 1
+}
         }],
         success_url="https://your-app.streamlit.app",
         cancel_url="https://your-app.streamlit.app",

@@ -21,7 +21,6 @@ def create_checkout(plan):
         payment_method_types=["card"],
         mode="payment",
 
-        # 🔥 THIS IS IMPORTANT (metadata links payment → user)
         metadata={
             "plan": plan
         },
@@ -34,7 +33,7 @@ def create_checkout(plan):
                 },
                 "unit_amount": prices[plan],
             },
-            quantity: 1,
+            "quantity": 1
         }],
 
         success_url="https://your-app.streamlit.app",
@@ -42,27 +41,6 @@ def create_checkout(plan):
     )
 
     return session.url
-    session = stripe.checkout.Session.create(
-        payment_method_types=["card"],
-        mode="payment",
-        line_items=[{
-            "price_data": {
-                "currency": "gbp",
-                "product_data": {
-                    "name": f"FIFA AI {plan.upper()} Plan",
-                },
-                "unit_amount": prices[plan],
-            },
-            {
-    "quantity": 1
-}
-        }],
-        success_url="https://your-app.streamlit.app",
-        cancel_url="https://your-app.streamlit.app",
-    )
-
-    return session.url
-
 
 # ---------------- SESSION STATE ----------------
 if "user" not in st.session_state:

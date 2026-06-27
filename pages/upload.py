@@ -1,5 +1,5 @@
 import streamlit as st
-from analyser import VideoAnalyzer
+from video_analyser import VideoAnalyzer
 
 st.title("📤 Upload Gameplay")
 

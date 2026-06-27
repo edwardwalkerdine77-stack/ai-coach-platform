@@ -158,14 +158,11 @@ class VideoAnalyzer:
             self.motion_buf.append(m)
             self.player_buf.append(p)
 
-            # EVENTS
             self.events.extend(self.detect_events(frame_id, m, p))
 
-            # MOMENTUM
             if len(self.motion_buf) > 20:
                 self.momentum.append(np.mean(self.motion_buf))
 
-            # UI UPDATES
             if progress:
                 progress.progress(frame_id / total)
 
